@@ -183,6 +183,30 @@ struct UniversalControlServiceTests {
         #expect(await shell.hasPkill())
     }
 
+    // MARK: setAutoReconnectEnabled
+
+    @Test("setAutoReconnectEnabled(false) → writes DisableAutoConnect=YES then pkill")
+    func disableAutoReconnect() async throws {
+        let shell = MockShellExecutor()
+        let service = UniversalControlService(shell: shell)
+
+        try await service.setAutoReconnectEnabled(false)
+
+        #expect(await shell.hasDefaultsWrite(domainKey: "DisableAutoConnect", value: "YES"))
+        #expect(await shell.hasPkill())
+    }
+
+    @Test("setAutoReconnectEnabled(true) → writes DisableAutoConnect=NO then pkill")
+    func enableAutoReconnect() async throws {
+        let shell = MockShellExecutor()
+        let service = UniversalControlService(shell: shell)
+
+        try await service.setAutoReconnectEnabled(true)
+
+        #expect(await shell.hasDefaultsWrite(domainKey: "DisableAutoConnect", value: "NO"))
+        #expect(await shell.hasPkill())
+    }
+
     // MARK: severAllConnections
 
     @Test("severAllConnections() → only pkill, no defaults write")

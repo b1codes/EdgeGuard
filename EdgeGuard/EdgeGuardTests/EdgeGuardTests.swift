@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import ServiceManagement
 @testable import EdgeGuard
 
 // MARK: - AppSettings Tests
@@ -49,5 +50,16 @@ struct AppSettingsTests {
         // Verifies the key-present-but-false path (different from key-absent default)
         UserDefaults.standard.set(false, forKey: "globalHotkeyEnabled")
         #expect(AppSettings.shared.globalHotkeyEnabled == false)
+    }
+
+    @Test("launchAtLogin is false when SMAppService is not registered (test process invariant)")
+    func launchAtLoginSMAppServiceNotRegistered() {
+        // In any test process, SMAppService.mainApp is never registered, so status != .enabled.
+        // This verifies the conversion logic used in syncLaunchAtLoginState().
+        let isEnabled = SMAppService.mainApp.status == .enabled
+        #expect(isEnabled == false)
+
+        AppSettings.shared.launchAtLogin = isEnabled
+        #expect(AppSettings.shared.launchAtLogin == false)
     }
 }

@@ -52,7 +52,10 @@ final class MenuBarController: NSObject {
         autoReconnectItem.state = .on
         updateIcon(ucEnabled: true)
 
-        // Load actual state asynchronously
+        // SMAppService is synchronously readable — seed the checkmark before the async Task fires
+        syncLaunchAtLoginState()
+
+        // Load actual UC state asynchronously
         Task { await refreshState() }
     }
 
