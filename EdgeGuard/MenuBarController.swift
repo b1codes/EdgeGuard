@@ -1,4 +1,5 @@
 import AppKit
+import os
 import ServiceManagement
 
 /// Owns the NSStatusItem and the NSMenu. Reads system state from UniversalControlService
@@ -8,6 +9,8 @@ final class MenuBarController: NSObject {
 
     private let statusItem: NSStatusItem
     private let service = UniversalControlService()
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "EdgeGuard", category: "MenuBarController")
+    private var isShowingError = false
 
     // Strong references to items updated dynamically after menu is built
     private let ucItem: NSMenuItem
@@ -106,7 +109,7 @@ final class MenuBarController: NSObject {
             syncLaunchAtLoginState()
             updateMenuAndIcon(state: state)
         } catch {
-            // Leave UI in current state if we can't read system prefs
+            logger.error("Failed to read Universal Control state: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -226,10 +229,14 @@ final class MenuBarController: NSObject {
     // MARK: - Error Handling
 
     private func showError(_ error: Error) {
+        logger.error("EdgeGuard action failed: \(error.localizedDescription, privacy: .public)")
+        guard !isShowingError else { return }
+        isShowingError = true
         let alert = NSAlert()
         alert.messageText = "EdgeGuard Error"
         alert.informativeText = error.localizedDescription
         alert.alertStyle = .warning
         alert.runModal()
+        isShowingError = false
     }
 }
