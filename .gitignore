@@ -63,3 +63,11 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+# b1CodingTool Generated
+CLAUDE.md
+.claude/
+GEMINI.md
+.gemini/
+.agent/
+agent.md
