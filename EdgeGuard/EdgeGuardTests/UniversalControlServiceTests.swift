@@ -16,7 +16,13 @@ actor MockShellExecutor: ShellExecutor {
 
     func run(executable: String, arguments: [String]) async throws -> String? {
         capturedCommands.append((executable: executable, arguments: arguments))
-        return stubbedOutput[key(executable, arguments)]
+        if let stubbed = stubbedOutput[key(executable, arguments)] {
+            return stubbed
+        }
+        if arguments.contains("write") || executable.contains("pkill") {
+            return ""
+        }
+        return nil
     }
 
     private func key(_ executable: String, _ arguments: [String]) -> String {
@@ -73,8 +79,8 @@ struct UniversalControlServiceTests {
         let shell = MockShellExecutor()
         await shell.stub(
             executable: "/usr/bin/defaults",
-            arguments: ["read", "com.apple.universalcontrol", "Disable"],
-            output: "1"
+            arguments: ["read", "com.apple.universalcontrol"],
+            output: "{\n    Disable = 1;\n}"
         )
         let service = UniversalControlService(shell: shell)
 
@@ -90,8 +96,8 @@ struct UniversalControlServiceTests {
         let shell = MockShellExecutor()
         await shell.stub(
             executable: "/usr/bin/defaults",
-            arguments: ["read", "com.apple.universalcontrol", "DisableMagicEdges"],
-            output: "1"
+            arguments: ["read", "com.apple.universalcontrol"],
+            output: "{\n    DisableMagicEdges = 1;\n}"
         )
         let service = UniversalControlService(shell: shell)
 
@@ -107,8 +113,8 @@ struct UniversalControlServiceTests {
         let shell = MockShellExecutor()
         await shell.stub(
             executable: "/usr/bin/defaults",
-            arguments: ["read", "com.apple.universalcontrol", "DisableAutoConnect"],
-            output: "1"
+            arguments: ["read", "com.apple.universalcontrol"],
+            output: "{\n    DisableAutoConnect = 1;\n}"
         )
         let service = UniversalControlService(shell: shell)
 
@@ -124,8 +130,8 @@ struct UniversalControlServiceTests {
         let shell = MockShellExecutor()
         await shell.stub(
             executable: "/usr/bin/defaults",
-            arguments: ["read", "com.apple.universalcontrol", "Disable"],
-            output: "0"
+            arguments: ["read", "com.apple.universalcontrol"],
+            output: "{\n    Disable = 0;\n}"
         )
         let service = UniversalControlService(shell: shell)
 

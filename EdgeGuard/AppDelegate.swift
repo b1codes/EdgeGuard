@@ -9,10 +9,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Belt-and-suspenders with LSUIElement in Info.plist
         NSApp.setActivationPolicy(.accessory)
 
-        menuBarController = MenuBarController()
+        let controller = MenuBarController()
+        menuBarController = controller
 
-        hotkeyManager = GlobalHotkeyManager { [weak self] in
+        let manager = GlobalHotkeyManager { [weak self] in
             self?.menuBarController?.toggleUniversalControl()
         }
+        hotkeyManager = manager
+        controller.hotkeyManager = manager
     }
 }

@@ -65,25 +65,25 @@ actor UniversalControlService {
     /// Reads the current state of all Universal Control preferences from the system.
     /// Keys that haven't been written yet default to enabled (Apple ships UC on by default).
     func fetchState() async throws -> UCState {
-        let disableOut = try await shell.run(
+        let plistOut = try await shell.run(
             executable: "/usr/bin/defaults",
-            arguments: ["read", Self.domain, "Disable"]
-        )
-        let magicEdgesOut = try await shell.run(
-            executable: "/usr/bin/defaults",
-            arguments: ["read", Self.domain, "DisableMagicEdges"]
-        )
-        let autoConnectOut = try await shell.run(
-            executable: "/usr/bin/defaults",
-            arguments: ["read", Self.domain, "DisableAutoConnect"]
-        )
+            arguments: ["read", Self.domain]
+        ) ?? ""
 
-        // nil (key absent) or "0" → feature is enabled; "1" → feature is disabled
+        let isDisable = parseBoolKey(plistOut, key: "Disable")
+        let isDisableMagicEdges = parseBoolKey(plistOut, key: "DisableMagicEdges")
+        let isDisableAutoConnect = parseBoolKey(plistOut, key: "DisableAutoConnect")
+
         return UCState(
-            universalControlEnabled: disableOut != "1",
-            magicEdgesEnabled: magicEdgesOut != "1",
-            autoReconnectEnabled: autoConnectOut != "1"
+            universalControlEnabled: !isDisable,
+            magicEdgesEnabled: !isDisableMagicEdges,
+            autoReconnectEnabled: !isDisableAutoConnect
         )
+    }
+
+    private func parseBoolKey(_ plist: String, key: String) -> Bool {
+        let pattern = "\\b\(key)\\s*=\\s*\"?1\"?\\b"
+        return plist.range(of: pattern, options: .regularExpression) != nil
     }
 
     /// Enables or disables Universal Control, then restarts the daemon.
@@ -114,10 +114,13 @@ actor UniversalControlService {
 
     /// Writes a "Disable*" key. Because all keys are inverted, `enabled = true` writes NO.
     private func writeKey(_ key: String, enabled: Bool) async throws {
-        _ = try await shell.run(
+        let result = try await shell.run(
             executable: "/usr/bin/defaults",
             arguments: ["write", Self.domain, key, "-bool", enabled ? "NO" : "YES"]
         )
+        if result == nil {
+            throw ShellError.writeFailed(domain: Self.domain, key: key)
+        }
     }
 
     /// Kills the UniversalControl daemon. A non-zero exit (process not running) is fine.
@@ -127,5 +130,18 @@ actor UniversalControlService {
             executable: "/usr/bin/pkill",
             arguments: ["UniversalControl"]
         )
+    }
+}
+
+// MARK: - Errors
+
+enum ShellError: Error, LocalizedError {
+    case writeFailed(domain: String, key: String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .writeFailed(let domain, let key):
+            return "Failed to write system preference '\(key)' in domain '\(domain)'. Ensure EdgeGuard has appropriate permissions."
+        }
     }
 }
