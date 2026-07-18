@@ -161,7 +161,7 @@ final class MenuBarController: NSObject {
             image?.isTemplate = true
             statusItem.button?.image = image
         } else {
-            let config = NSImage.SymbolConfiguration(paletteColors: [.systemRed])
+            let config = NSImage.SymbolConfiguration(paletteColors: [DesignSystem.Colors.primary])
             let image = NSImage(
                 systemSymbolName: symbolName,
                 accessibilityDescription: "EdgeGuard: Universal Control disabled"
