@@ -69,5 +69,5 @@ CLAUDE.md
 .claude/
 GEMINI.md
 .gemini/
-.agent/
-agent.md
+.agents/
+AGENTS.md
